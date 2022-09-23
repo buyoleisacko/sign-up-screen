@@ -44,6 +44,21 @@ class MainActivity : AppCompatActivity() {
         binding.btnGallery.setOnClickListener {
             galleryCheckPermission()
         }
+
+        //when you click on the image
+        binding.imageView2.setOnClickListener {
+            val pictureDialog = AlertDialog.Builder(this)
+            pictureDialog.setTitle("Select Action")
+            val pictureDialogItem = arrayOf("Select photo from gallery",
+                "Camera Photo from Camera")
+            pictureDialog.setItems(pictureDialogItem){dialog, which ->
+                when(which){
+                    0 -> gallery()
+                    1 -> camera()
+                }
+            }
+            pictureDialog.show()
+        }
     }
 
     private fun galleryCheckPermission(){
@@ -121,6 +136,13 @@ class MainActivity : AppCompatActivity() {
 
                     //we are using coroutine image loader(coil)
                     binding.imageView2.load(bitmap){
+                        crossfade(true)
+                        crossfade(1000)
+                        transformations(CircleCropTransformation())
+                    }
+                }
+                GALLERY_REQUEST_CODE ->{
+                    binding.imageView2.load(data?.data){
                         crossfade(true)
                         crossfade(1000)
                         transformations(CircleCropTransformation())
