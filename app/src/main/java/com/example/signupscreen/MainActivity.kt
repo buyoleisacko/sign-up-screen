@@ -4,19 +4,27 @@ import android.Manifest
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Camera
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import coil.imageLoader
+import coil.load
+import coil.transform.CircleCropTransformation
 import com.example.signupscreen.databinding.ActivityMainBinding
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
+import com.karumi.dexter.listener.PermissionDeniedResponse
+import com.karumi.dexter.listener.PermissionGrantedResponse
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import com.karumi.dexter.listener.single.PermissionListener
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,6 +40,43 @@ class MainActivity : AppCompatActivity() {
         binding.btnCamera.setOnClickListener {
             cameraCheckPermission()
         }
+
+        binding.btnGallery.setOnClickListener {
+            galleryCheckPermission()
+        }
+    }
+
+    private fun galleryCheckPermission(){
+        Dexter.withContext(this).withPermission(
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        ).withListener(object : PermissionListener{
+            override fun onPermissionGranted(p0: PermissionGrantedResponse?) {
+                galleryCheckPermission()
+            }
+
+            override fun onPermissionDenied(p0: PermissionDeniedResponse?) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "You have denied the storage permission",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                showRotationalDialogForPermission()
+            }
+
+            override fun onPermissionRationaleShouldBeShown(
+                p0: PermissionRequest?,
+                p1: PermissionToken?
+            ) {
+                showRotationalDialogForPermission()
+            }
+        }).onSameThread().check()
+    }
+
+    private fun gallery(){
+        val intent = Intent(Intent.ACTION_PICK)
+        intent.type = "image/*"
+        startActivityForResult(intent, GALLERY_REQUEST_CODE)
     }
 
     private fun cameraCheckPermission(){
@@ -53,12 +98,12 @@ class MainActivity : AppCompatActivity() {
                         p0: MutableList<PermissionRequest>?,
                         p1: PermissionToken?
                     ) {
-                        showRorationalDialogForPermission()
+                        showRotationalDialogForPermission()
                     }
 
                 }
 
-            )
+            ).onSameThread().check()
     }
 
     private fun camera(){
@@ -66,7 +111,26 @@ class MainActivity : AppCompatActivity() {
         startActivityForResult(intent, CAMERA_REQUEST_CODE)
     }
 
-    private fun showRorationalDialogForPermission(){
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == Activity.RESULT_OK){
+            when(requestCode){
+                CAMERA_REQUEST_CODE->{
+
+                    val bitmap = data?.extras?.get("data") as Bitmap
+
+                    //we are using coroutine image loader(coil)
+                    binding.imageView2.load(bitmap){
+                        crossfade(true)
+                        crossfade(1000)
+                        transformations(CircleCropTransformation())
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showRotationalDialogForPermission(){
         AlertDialog.Builder(this)
             .setMessage("It looks like you have turned off permissions"
             + "required for this feature. It can be enabled under App Settings")
