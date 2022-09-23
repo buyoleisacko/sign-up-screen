@@ -1,11 +1,15 @@
 package com.example.signupscreen
 
 import android.Manifest
+import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.graphics.Camera
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.Settings
 import androidx.appcompat.app.AlertDialog
 import com.example.signupscreen.databinding.ActivityMainBinding
 import com.karumi.dexter.Dexter
@@ -66,6 +70,18 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setMessage("It looks like you have turned off permissions"
             + "required for this feature. It can be enabled under App Settings")
-            .setPositiveButton("Go to settings"){}
+            .setPositiveButton("Go to settings"){_,_->
+
+                try {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    val uri = Uri.fromParts("package", packageName, null)
+                    intent.data = uri
+                    startActivity(intent)
+
+                }catch (e: ActivityNotFoundException){
+                    e.printStackTrace()
+                }
+            }
+
     }
 }
